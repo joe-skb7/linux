@@ -167,3 +167,29 @@
 		"[NC]",
 		"[NC]";
 };
+
+&am33xx_pinmux {
+	max732_pins: max732_pins {
+		pinctrl-single,pins = <
+			AM33XX_IOPAD(0x82c, PIN_INPUT | MUX_MODE7)		/* gpmc_ad11.gpio0_27 */
+		>;
+	};
+};
+
+/* i2c2_pins are already muxed, i2c2.status is okay, driver is built-in */
+&i2c2 {
+	expander: max7325@68 {
+		compatible = "maxim,max7325";
+		reg = <0x68>;
+		gpio-controller;
+		#gpio-cells = <2>;
+
+		interrupt-controller;
+		#interrupt-cells = <2>;
+		interrupt-parent = <&gpio0>;
+		interrupts = <27 IRQ_TYPE_EDGE_FALLING>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&max732_pins>;
+	};
+};
