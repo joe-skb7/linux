@@ -7,6 +7,7 @@
 #include "am33xx.dtsi"
 #include "am335x-bone-common.dtsi"
 #include "am335x-boneblack-common.dtsi"
+#include <dt-bindings/input/input.h>
 
 / {
 	model = "TI AM335x BeagleBone Black";
@@ -191,5 +192,120 @@
 
 		pinctrl-names = "default";
 		pinctrl-0 = <&max732_pins>;
+	};
+};
+
+/ {
+	leds {
+		compatible = "gpio-leds";
+		status = "okay";
+
+		o8 {
+			label = "O8";
+			gpios = <&expander 8 GPIO_ACTIVE_LOW>;
+		};
+
+		o9 {
+			label = "O9";
+			gpios = <&expander 9 GPIO_ACTIVE_LOW>;
+		};
+
+		o10 {
+			label = "O10";
+			gpios = <&expander 10 GPIO_ACTIVE_LOW>;
+		};
+
+		o11 {
+			label = "O11";
+			gpios = <&expander 11 GPIO_ACTIVE_LOW>;
+		};
+
+		o12 {
+			label = "O12";
+			gpios = <&expander 12 GPIO_ACTIVE_LOW>;
+		};
+
+		o13 {
+			label = "O13";
+			gpios = <&expander 13 GPIO_ACTIVE_LOW>;
+		};
+
+		o14 {
+			label = "O14";
+			gpios = <&expander 14 GPIO_ACTIVE_LOW>;
+		};
+
+		o15 {
+			label = "O15";
+			gpios = <&expander 15 GPIO_ACTIVE_LOW>;
+		};
+	};
+
+	gpio-keys {
+		compatible = "gpio-keys";
+
+		p0 {
+			label = "P0";
+			linux,code = <KEY_0>;
+			interrupt-parent = <&expander>;
+			interrupts = <0 IRQ_TYPE_EDGE_RISING>;
+			wakeup-source;
+		};
+
+		p1 {
+			label = "P1";
+			linux,code = <KEY_1>;
+			interrupt-parent = <&expander>;
+			interrupts = <1 IRQ_TYPE_EDGE_RISING>;
+			wakeup-source;
+		};
+
+		p2 {
+			label = "P2";
+			linux,code = <KEY_2>;
+			interrupt-parent = <&expander>;
+			interrupts = <2 IRQ_TYPE_EDGE_RISING>;
+			wakeup-source;
+		};
+
+		p3 {
+			label = "P3";
+			linux,code = <KEY_3>;
+			interrupt-parent = <&expander>;
+			interrupts = <3 IRQ_TYPE_EDGE_RISING>;
+			wakeup-source;
+		};
+
+		p4 {
+			label = "P4";
+			linux,code = <KEY_4>;
+			interrupt-parent = <&expander>;
+			interrupts = <4 IRQ_TYPE_EDGE_RISING>;
+			wakeup-source;
+		};
+
+		p5 {
+			label = "P5";
+			linux,code = <KEY_5>;
+			interrupt-parent = <&expander>;
+			interrupts = <5 IRQ_TYPE_EDGE_RISING>;
+			wakeup-source;
+		};
+
+		p6 {
+			label = "P6";
+			linux,code = <KEY_6>;
+			interrupt-parent = <&expander>;
+			interrupts = <6 IRQ_TYPE_EDGE_RISING>;
+			wakeup-source;
+		};
+
+		p7 {
+			label = "P7";
+			linux,code = <KEY_7>;
+			interrupt-parent = <&expander>;
+			interrupts = <7 IRQ_TYPE_EDGE_RISING>;
+			wakeup-source;
+		};
 	};
 };
