@@ -223,13 +223,6 @@ static const struct sysmmu_fault_info sysmmu_v5_faults[] = {
 	{ 20, REG_V5_FAULT_AW_VA, "AW SECURITY PROTECTION", IOMMU_FAULT_WRITE },
 };
 
-static const struct sysmmu_fault_info sysmmu_v7_faults[] = {
-	{ 0, REG_V5_FAULT_AR_VA, "PTW", IOMMU_FAULT_READ },
-	{ 1, REG_V5_FAULT_AR_VA, "PAGE", IOMMU_FAULT_READ },
-	{ 3, REG_V5_FAULT_AR_VA, "ACCESS", IOMMU_FAULT_READ },
-	{ 4, REG_V5_FAULT_AR_VA, "SECURITY", IOMMU_FAULT_READ },
-};
-
 /*
  * This structure is attached to dev->iommu->priv of the master device
  * on device add, contains a list of SYSMMU controllers defined by device tree,
@@ -423,16 +416,11 @@ static irqreturn_t exynos_sysmmu_irq(int irq, void *dev_id)
 		reg_clear = REG_INT_CLEAR;
 		finfo = sysmmu_faults;
 		n = ARRAY_SIZE(sysmmu_faults);
-	} else if (MMU_MAJ_VER(data->version) < 7) {
+	} else {
 		reg_status = REG_V5_INT_STATUS;
 		reg_clear = REG_V5_INT_CLEAR;
 		finfo = sysmmu_v5_faults;
 		n = ARRAY_SIZE(sysmmu_v5_faults);
-	} else {
-		reg_status = REG_V5_INT_STATUS;
-		reg_clear = REG_V5_INT_CLEAR;
-		finfo = sysmmu_v7_faults;
-		n = ARRAY_SIZE(sysmmu_v7_faults);
 	}
 
 	spin_lock(&data->lock);
@@ -490,10 +478,8 @@ static void __sysmmu_init_config(struct sysmmu_drvdata *data)
 		cfg = CFG_LRU | CFG_QOS(15);
 	else if (data->version <= MAKE_MMU_VER(3, 2))
 		cfg = CFG_LRU | CFG_QOS(15) | CFG_FLPDCACHE | CFG_SYSSEL;
-	else if (data->version <= MAKE_MMU_VER(5, 2))
-		cfg = CFG_QOS(15) | CFG_FLPDCACHE | CFG_ACGEN;
 	else
-		cfg = 0;
+		cfg = CFG_QOS(15) | CFG_FLPDCACHE | CFG_ACGEN;
 
 	cfg |= CFG_EAP; /* enable access protection bits check */
 
