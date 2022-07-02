@@ -180,6 +180,47 @@ static u32 lv2ent_offset(sysmmu_iova_t iova)
 
 #define has_sysmmu(dev)		(dev_iommu_priv_get(dev) != NULL)
 
+#define MMU_REG(data, idx)		\
+	((data)->sfrbase + (data)->regs[idx].off)
+#define MMU_VM_REG(data, idx, vmid)	\
+	(MMU_REG(data, idx) + (vmid) * (data)->regs[idx].mult)
+
+enum {
+	REG_SET_NON_VM,
+	REG_SET_VM,
+	MAX_REG_SET
+};
+
+enum {
+	IDX_CTRL_VM,
+	IDX_CFG_VM,
+	IDX_FLPT_BASE,
+	IDX_ALL_INV,
+	MAX_REG_IDX
+};
+
+struct sysmmu_vm_reg {
+	unsigned int off;	/* register offset */
+	unsigned int mult;	/* VM index offset multiplier */
+};
+
+static const struct sysmmu_vm_reg sysmmu_regs[MAX_REG_SET][MAX_REG_IDX] = {
+	/* Default register set (non-VM) */
+	{
+		/*
+		 * SysMMUs without VM support do not have CTRL_VM and CFG_VM
+		 * registers. Setting the offsets to 1 will trigger an unaligned
+		 * access exception.
+		 */
+		{0x1}, {0x1}, {0x000c}, {0x0010},
+	},
+	/* VM capable register set */
+	{
+		{0x8000, 0x1000}, {0x8004, 0x1000}, {0x800c, 0x1000},
+		{0x8010, 0x1000},
+	},
+};
+
 static struct device *dma_dev;
 static struct kmem_cache *lv2table_kmem_cache;
 static sysmmu_pte_t *zero_lv2_table;
@@ -284,6 +325,7 @@ struct sysmmu_drvdata {
 
 	/* v7 fields */
 	bool has_vcr;			/* virtual machine control register */
+	const struct sysmmu_vm_reg *regs; /* register set */
 };
 
 static struct exynos_iommu_domain *to_exynos_domain(struct iommu_domain *dom)
@@ -407,6 +449,10 @@ static void sysmmu_get_hw_info(struct sysmmu_drvdata *data)
 	__sysmmu_get_version(data);
 	if (MMU_MAJ_VER(data->version) >= 7 && __sysmmu_has_capa1(data))
 		__sysmmu_get_vcr(data);
+	if (data->has_vcr)
+		data->regs = sysmmu_regs[REG_SET_VM];
+	else
+		data->regs = sysmmu_regs[REG_SET_NON_VM];
 
 	__sysmmu_disable_clocks(data);
 }
