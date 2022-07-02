@@ -135,6 +135,8 @@ static u32 lv2ent_offset(sysmmu_iova_t iova)
 #define CFG_SYSSEL	(1 << 22) /* System MMU 3.2 only */
 #define CFG_FLPDCACHE	(1 << 20) /* System MMU 3.2+ only */
 
+#define CTRL_VM_ENABLE			BIT(0)
+#define CTRL_VM_FAULT_MODE_STALL	BIT(3)
 #define CAPA0_CAPA1_EXIST		BIT(11)
 #define CAPA1_VCR_ENABLED		BIT(14)
 
@@ -358,8 +360,10 @@ static void __sysmmu_tlb_invalidate(struct sysmmu_drvdata *data)
 {
 	if (MMU_MAJ_VER(data->version) < 5)
 		writel(0x1, data->sfrbase + REG_MMU_FLUSH);
-	else
+	else if (MMU_MAJ_VER(data->version) < 7)
 		writel(0x1, data->sfrbase + REG_V5_MMU_FLUSH_ALL);
+	else
+		writel(0x1, MMU_VM_REG(data, IDX_ALL_INV, 0));
 }
 
 static void __sysmmu_tlb_invalidate_entry(struct sysmmu_drvdata *data,
@@ -391,9 +395,11 @@ static void __sysmmu_set_ptbase(struct sysmmu_drvdata *data, phys_addr_t pgd)
 {
 	if (MMU_MAJ_VER(data->version) < 5)
 		writel(pgd, data->sfrbase + REG_PT_BASE_ADDR);
-	else
+	else if (MMU_MAJ_VER(data->version) < 7)
 		writel(pgd >> PAGE_SHIFT,
 			     data->sfrbase + REG_V5_PT_BASE_PFN);
+	else
+		writel(pgd >> SPAGE_ORDER, MMU_VM_REG(data, IDX_FLPT_BASE, 0));
 
 	__sysmmu_tlb_invalidate(data);
 }
@@ -571,6 +577,12 @@ static void __sysmmu_enable(struct sysmmu_drvdata *data)
 	writel(CTRL_BLOCK, data->sfrbase + REG_MMU_CTRL);
 	__sysmmu_init_config(data);
 	__sysmmu_set_ptbase(data, data->pgtable);
+	if (MMU_MAJ_VER(data->version) >= 7 && data->has_vcr) {
+		u32 ctrl = readl(MMU_VM_REG(data, IDX_CTRL_VM, 0));
+
+		ctrl |= CTRL_VM_ENABLE | CTRL_VM_FAULT_MODE_STALL;
+		writel(ctrl, MMU_VM_REG(data, IDX_CTRL_VM, 0));
+	}
 	writel(CTRL_ENABLE, data->sfrbase + REG_MMU_CTRL);
 	data->active = true;
 	spin_unlock_irqrestore(&data->lock, flags);
